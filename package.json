@@ -1,0 +1,27 @@
+{
+  "name": "finaktiva",
+  "version": "1.0.0",
+  "description": "",
+  "dependencies": {
+    "aws-sdk": "^2.1691.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "joi": "^17.13.3",
+    "serverless-http": "^3.2.0",
+    "ulid": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.13",
+    "@types/joi": "^17.2.2",
+    "@types/node": "^22.7.7",
+    "serverless-offline": "^14.3.3",
+    "typescript": "^5.6.3"
+  },
+  "scripts": {
+    "build": "tsc",
+    "deploy": "npm run build && serverless deploy",
+    "dev": "sls offline"
+  }
+}

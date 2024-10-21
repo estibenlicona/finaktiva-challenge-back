@@ -1,0 +1,77 @@
+service: finaktiva-event-logs
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  stage: dev
+
+  environment:
+    EVENTS_TABLE_NAME: !Ref EventLogsTable
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+        - dynamodb:Query
+      Resource:
+        - !GetAtt EventLogsTable.Arn
+    - Effect: Allow
+      Action:
+        - sqs:SendMessage
+        - sqs:ReceiveMessage
+        - sqs:DeleteMessage
+      Resource:
+        - !GetAtt EventQueue.Arn
+
+
+  httpApi:
+    cors:
+      allowedOrigins:
+        - 'http://localhost:4200'
+        - 'https://staging.d212669be8skfj.amplifyapp.com'
+  
+functions:
+  GetEvents:
+    handler: dist/handlers/getEvents.handler
+    events:
+      - httpApi:
+          method: get
+          path: /events/{page}/{limit}/{type}/{registrationStart}/{registrationEnd}
+  EnqueueEvent:
+    handler: dist/handlers/enqueueEvent.handler
+    events:
+      - httpApi:
+          method: post
+          path: /events
+    environment:
+      EVENTS_QUEUE_URL: !Ref EventQueue
+
+  ProcessEventQueue:
+    handler: dist/handlers/processEventQueue.handler
+    events:
+      - sqs:
+          arn: 
+            !GetAtt EventQueue.Arn
+
+resources:
+  Resources:
+    EventQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: events-sqs-queue
+
+    EventLogsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: EventLogs
+        AttributeDefinitions:
+          - AttributeName: Type
+            AttributeType: S
+          - AttributeName: Registration
+            AttributeType: N
+        KeySchema:
+          - AttributeName: Type
+            KeyType: HASH
+          - AttributeName: Registration
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
